@@ -13,8 +13,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "TrackifAI Backend is running 🚀",
-    timestamp: new Date().toISOString(),
+    message: "TrackifAI Backend is running"
   });
 });
 
