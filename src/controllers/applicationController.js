@@ -81,7 +81,7 @@ export const getApplications = async (req, res) => {
       await Application.countDocuments(query);
 
     const applications =
-      await Application.find(query)
+      await Application.find(query).populate("resume","title")
         .sort(sortOption)
         .skip(skip)
         .limit(Number(limit));
@@ -285,7 +285,7 @@ export const getApplicationById = async (
     const application = await Application.findOne({
       _id: req.params.id,
       user: req.user._id,
-    });
+    }).populate("resume", "title");
 
     if (!application) {
       return res.status(404).json({
@@ -332,7 +332,7 @@ export const updateApplication = async (
           new: true,
           runValidators: true,
         }
-      );
+      ).populate("resume", "title");
 
     res.status(200).json({
       success: true,
@@ -390,7 +390,7 @@ export const getRecentApplications = async (
     const applications =
       await Application.find({
         user: req.user._id,
-      })
+      }).populate("resume", "title")
         .sort({
           createdAt: -1,
         })
@@ -658,3 +658,6 @@ export const updateInterviewResult =
       });
     }
   };
+
+
+  

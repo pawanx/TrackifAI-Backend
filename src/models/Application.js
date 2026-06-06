@@ -72,6 +72,11 @@ const applicationSchema = new mongoose.Schema(
       default: Date.now,
     },
 
+    resume: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Resume",
+    },
+
     interviews: [
       {
         round: {
