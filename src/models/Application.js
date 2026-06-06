@@ -43,6 +43,7 @@ const applicationSchema = new mongoose.Schema(
         "Indeed",
         "Referral",
         "Company Website",
+        "Internshala",
         "Other",
       ],
       default: "Other",
@@ -70,15 +71,41 @@ const applicationSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
+    interviews: [
+      {
+        round: {
+          type: String,
+          required: true,
+        },
+
+        interviewDate: {
+          type: Date,
+        },
+
+        interviewer: {
+          type: String,
+          default: "",
+        },
+
+        result: {
+          type: String,
+          enum: ["Scheduled", "Passed", "Failed", "Pending"],
+          default: "Scheduled",
+        },
+
+        notes: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-const Application = mongoose.model(
-  "Application",
-  applicationSchema
-);
+const Application = mongoose.model("Application", applicationSchema);
 
 export default Application;

@@ -14,4 +14,5 @@ export const APPLICATION_SOURCES = [
   "Referral",
   "Company Website",
   "Other",
+  "Internshala"
 ];

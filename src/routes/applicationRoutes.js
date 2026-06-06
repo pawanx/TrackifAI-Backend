@@ -10,6 +10,8 @@ import {
   deleteApplication,
   getApplicationStats,
   getMonthlyStats,
+  getRecentApplications,
+  updateApplicationStatus
 } from "../controllers/applicationController.js";
 
 const router = express.Router();
@@ -30,6 +32,18 @@ router.get(
   "/stats/monthly",
   protect,
   getMonthlyStats
+);
+
+router.get(
+  "/recent",
+  protect,
+  getRecentApplications
+);
+
+router.patch(
+  "/:id/status",
+  protect,
+  updateApplicationStatus
 );
 
 router

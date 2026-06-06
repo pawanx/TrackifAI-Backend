@@ -376,3 +376,285 @@ export const deleteApplication = async (
     });
   }
 };
+
+
+// @desc Get Recent Applications
+// @route GET /api/applications/recent
+// @access Private
+
+export const getRecentApplications = async (
+  req,
+  res
+) => {
+  try {
+    const applications =
+      await Application.find({
+        user: req.user._id,
+      })
+        .sort({
+          createdAt: -1,
+        })
+        .limit(5);
+
+    res.status(200).json({
+      success: true,
+      data: applications,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+
+// PATCH /api/applications/:id/status
+
+export const updateApplicationStatus =
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+
+      const application =
+        await Application.findOne({
+          _id: req.params.id,
+          user: req.user._id,
+        });
+
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Application not found",
+        });
+      }
+
+      application.status = status;
+
+      await application.save();
+
+      res.status(200).json({
+        success: true,
+        data: application,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+
+  export const addInterview = async (
+  req,
+  res
+) => {
+  try {
+    const application =
+      await Application.findOne({
+        _id: req.params.id,
+        user: req.user._id,
+      });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Application not found",
+      });
+    }
+
+    application.interviews.push(
+      req.body
+    );
+
+    await application.save();
+
+    res.status(201).json({
+      success: true,
+      data: application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const updateInterviewResult =
+  async (req, res) => {
+    try {
+      const { result } = req.body;
+
+      const application =
+        await Application.findOne({
+          _id: req.params.applicationId,
+          user: req.user._id,
+        });
+
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Application not found",
+        });
+      }
+
+      const interview =
+        application.interviews.id(
+          req.params.interviewId
+        );
+
+      if (!interview) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Interview not found",
+        });
+      }
+
+      interview.result = result;
+
+      await application.save();
+
+      res.status(200).json({
+        success: true,
+        data: application,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+  export const deleteInterview =
+  async (req, res) => {
+    try {
+      const application =
+        await Application.findOne({
+          _id: req.params.applicationId,
+          user: req.user._id,
+        });
+
+      if (!application) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Application not found",
+        });
+      }
+
+      const interview =
+        application.interviews.id(
+          req.params.interviewId
+        );
+
+      if (!interview) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Interview not found",
+        });
+      }
+
+      interview.deleteOne();
+
+      await application.save();
+
+      res.status(200).json({
+        success: true,
+        message:
+          "Interview deleted successfully",
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };
+
+
+  export const getUpcomingInterviews =
+  async (req, res) => {
+    try {
+      const today = new Date();
+
+      const applications =
+        await Application.find({
+          user: req.user._id,
+        });
+
+      const interviews = [];
+
+      applications.forEach(
+        (application) => {
+          application.interviews.forEach(
+            (interview) => {
+              if (
+                interview.interviewDate &&
+                new Date(
+                  interview.interviewDate
+                ) >= today &&
+                interview.result !==
+                  "Passed" &&
+                interview.result !==
+                  "Failed"
+              ) {
+                interviews.push({
+                  applicationId:
+                    application._id,
+
+                  companyName:
+                    application.companyName,
+
+                  role:
+                    application.role,
+
+                  round:
+                    interview.round,
+
+                  interviewDate:
+                    interview.interviewDate,
+
+                  interviewer:
+                    interview.interviewer,
+
+                  result:
+                    interview.result,
+                });
+              }
+            }
+          );
+        }
+      );
+
+      interviews.sort(
+        (a, b) =>
+          new Date(
+            a.interviewDate
+          ) -
+          new Date(
+            b.interviewDate
+          )
+      );
+
+      res.status(200).json({
+        success: true,
+        data: interviews.slice(
+          0,
+          5
+        ),
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  };

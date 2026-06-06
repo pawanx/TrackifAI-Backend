@@ -3,6 +3,7 @@ import cors from "cors";
 
 import applicationRoutes from "./routes/applicationRoutes.js"
 import authRoutes from "./routes/authRoutes.js";
+import interviewRoutes from "./routes/interviewRoutes.js"
 
 const app = express();
 
@@ -22,6 +23,10 @@ app.use(
   "/api/applications",
   applicationRoutes
 );
+
+app.use(
+  "/api/interviews",interviewRoutes
+)
 
 
 export default app;
