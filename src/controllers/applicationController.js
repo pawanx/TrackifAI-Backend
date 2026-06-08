@@ -1,15 +1,9 @@
 import Application from "../models/Application.js";
+import createActivity from "../utils/createActivity.js";
 
 export const getApplications = async (req, res) => {
   try {
-    const {
-      search,
-      status,
-      source,
-      sort,
-      page = 1,
-      limit = 10,
-    } = req.query;
+    const { search, status, source, sort, page = 1, limit = 10 } = req.query;
 
     const query = {
       user: req.user._id,
@@ -74,26 +68,22 @@ export const getApplications = async (req, res) => {
       }
     }
 
-    const skip =
-      (Number(page) - 1) * Number(limit);
+    const skip = (Number(page) - 1) * Number(limit);
 
-    const total =
-      await Application.countDocuments(query);
+    const total = await Application.countDocuments(query);
 
-    const applications =
-      await Application.find(query).populate("resume","title")
-        .sort(sortOption)
-        .skip(skip)
-        .limit(Number(limit));
+    const applications = await Application.find(query)
+      .populate("resume", "title")
+      .sort(sortOption)
+      .skip(skip)
+      .limit(Number(limit));
 
     res.status(200).json({
       success: true,
 
       pagination: {
         currentPage: Number(page),
-        totalPages: Math.ceil(
-          total / Number(limit)
-        ),
+        totalPages: Math.ceil(total / Number(limit)),
         totalRecords: total,
         recordsPerPage: Number(limit),
       },
@@ -108,15 +98,11 @@ export const getApplications = async (req, res) => {
   }
 };
 
-
 // @desc Get Dashboard Stats
 // @route GET /api/applications/stats
 // @access Private
 
-export const getApplicationStats = async (
-  req,
-  res
-) => {
+export const getApplicationStats = async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -178,20 +164,12 @@ export const getApplicationStats = async (
 
     result.interviewRate =
       result.totalApplications > 0
-        ? (
-            (result.interview /
-              result.totalApplications) *
-            100
-          ).toFixed(2)
+        ? ((result.interview / result.totalApplications) * 100).toFixed(2)
         : 0;
 
     result.offerRate =
       result.totalApplications > 0
-        ? (
-            (result.offer /
-              result.totalApplications) *
-            100
-          ).toFixed(2)
+        ? ((result.offer / result.totalApplications) * 100).toFixed(2)
         : 0;
 
     res.status(200).json({
@@ -206,15 +184,11 @@ export const getApplicationStats = async (
   }
 };
 
-
 // @desc Monthly Application Trends
 // @route GET /api/applications/stats/monthly
 // @access Private
 
-export const getMonthlyStats = async (
-  req,
-  res
-) => {
+export const getMonthlyStats = async (req, res) => {
   try {
     const stats = await Application.aggregate([
       {
@@ -264,11 +238,26 @@ export const createApplication = async (req, res) => {
       user: req.user._id,
     });
 
+    const { status } = req.body;
+
+    await createActivity({
+      user: req.user._id,
+
+      type: "APPLICATION_CREATED",
+
+      title: `Applied to ${application.companyName}`,
+
+      description: `${application.role} position`,
+
+      application: application._id,
+    });
+
     res.status(201).json({
       success: true,
       data: application,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -276,11 +265,7 @@ export const createApplication = async (req, res) => {
   }
 };
 
-
-export const getApplicationById = async (
-  req,
-  res
-) => {
+export const getApplicationById = async (req, res) => {
   try {
     const application = await Application.findOne({
       _id: req.params.id,
@@ -306,11 +291,7 @@ export const getApplicationById = async (
   }
 };
 
-
-export const updateApplication = async (
-  req,
-  res
-) => {
+export const updateApplication = async (req, res) => {
   try {
     const application = await Application.findOne({
       _id: req.params.id,
@@ -324,21 +305,41 @@ export const updateApplication = async (
       });
     }
 
-    const updatedApplication =
-      await Application.findByIdAndUpdate(
-        req.params.id,
-        req.body,
-        {
-          new: true,
-          runValidators: true,
-        }
-      ).populate("resume", "title");
+    const oldStatus = application.status;
+
+    if (req.body.resume === "") {
+      delete req.body.resume;
+    }
+
+    const updatedApplication = await Application.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).populate("resume", "title");
+
+    const newStatus = updatedApplication.status;
+
+    await createActivity({
+      user: req.user._id,
+
+      type: "STATUS_CHANGED",
+
+      title: `${application.companyName} moved to ${newStatus}`,
+
+      description: `${oldStatus} → ${newStatus}`,
+
+      application: application._id,
+    });
 
     res.status(200).json({
       success: true,
       data: updatedApplication,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -346,10 +347,7 @@ export const updateApplication = async (
   }
 };
 
-export const deleteApplication = async (
-  req,
-  res
-) => {
+export const deleteApplication = async (req, res) => {
   try {
     const application = await Application.findOne({
       _id: req.params.id,
@@ -377,24 +375,20 @@ export const deleteApplication = async (
   }
 };
 
-
 // @desc Get Recent Applications
 // @route GET /api/applications/recent
 // @access Private
 
-export const getRecentApplications = async (
-  req,
-  res
-) => {
+export const getRecentApplications = async (req, res) => {
   try {
-    const applications =
-      await Application.find({
-        user: req.user._id,
-      }).populate("resume", "title")
-        .sort({
-          createdAt: -1,
-        })
-        .limit(5);
+    const applications = await Application.find({
+      user: req.user._id,
+    })
+      .populate("resume", "title")
+      .sort({
+        createdAt: -1,
+      })
+      .limit(5);
 
     res.status(200).json({
       success: true,
@@ -408,69 +402,69 @@ export const getRecentApplications = async (
   }
 };
 
-
 // PATCH /api/applications/:id/status
 
-export const updateApplicationStatus =
-  async (req, res) => {
-    try {
-      const { status } = req.body;
-
-      const application =
-        await Application.findOne({
-          _id: req.params.id,
-          user: req.user._id,
-        });
-
-      if (!application) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Application not found",
-        });
-      }
-
-      application.status = status;
-
-      await application.save();
-
-      res.status(200).json({
-        success: true,
-        data: application,
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  };
-
-
-  export const addInterview = async (
-  req,
-  res
-) => {
+export const updateApplicationStatus = async (req, res) => {
   try {
-    const application =
-      await Application.findOne({
-        _id: req.params.id,
-        user: req.user._id,
-      });
+    const { status } = req.body;
+
+    const application = await Application.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
 
     if (!application) {
       return res.status(404).json({
         success: false,
-        message:
-          "Application not found",
+        message: "Application not found",
       });
     }
 
-    application.interviews.push(
-      req.body
-    );
+    application.status = status;
 
     await application.save();
+
+    res.status(200).json({
+      success: true,
+      data: application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const addInterview = async (req, res) => {
+  try {
+    const application = await Application.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    application.interviews.push(req.body);
+
+    await application.save();
+
+    await createActivity({
+      user: req.user._id,
+
+      type: "INTERVIEW_ADDED",
+
+      title: `Interview scheduled at ${application.companyName}`,
+
+      description: req.body.round,
+
+      application: application._id,
+    });
 
     res.status(201).json({
       success: true,
@@ -484,180 +478,135 @@ export const updateApplicationStatus =
   }
 };
 
-export const updateInterviewResult =
-  async (req, res) => {
-    try {
-      const { result } = req.body;
+export const updateInterviewResult = async (req, res) => {
+  try {
+    const { result } = req.body;
 
-      const application =
-        await Application.findOne({
-          _id: req.params.applicationId,
-          user: req.user._id,
-        });
+    const application = await Application.findOne({
+      _id: req.params.applicationId,
+      user: req.user._id,
+    });
 
-      if (!application) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Application not found",
-        });
-      }
-
-      const interview =
-        application.interviews.id(
-          req.params.interviewId
-        );
-
-      if (!interview) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Interview not found",
-        });
-      }
-
-      interview.result = result;
-
-      await application.save();
-
-      res.status(200).json({
-        success: true,
-        data: application,
-      });
-    } catch (error) {
-      res.status(500).json({
+    if (!application) {
+      return res.status(404).json({
         success: false,
-        message: error.message,
+        message: "Application not found",
       });
     }
-  };
 
-  export const deleteInterview =
-  async (req, res) => {
-    try {
-      const application =
-        await Application.findOne({
-          _id: req.params.applicationId,
-          user: req.user._id,
-        });
+    const interview = application.interviews.id(req.params.interviewId);
 
-      if (!application) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Application not found",
-        });
-      }
-
-      const interview =
-        application.interviews.id(
-          req.params.interviewId
-        );
-
-      if (!interview) {
-        return res.status(404).json({
-          success: false,
-          message:
-            "Interview not found",
-        });
-      }
-
-      interview.deleteOne();
-
-      await application.save();
-
-      res.status(200).json({
-        success: true,
-        message:
-          "Interview deleted successfully",
-      });
-    } catch (error) {
-      res.status(500).json({
+    if (!interview) {
+      return res.status(404).json({
         success: false,
-        message: error.message,
+        message: "Interview not found",
       });
     }
-  };
 
+    interview.result = result;
 
-  export const getUpcomingInterviews =
-  async (req, res) => {
-    try {
-      const today = new Date();
+    await application.save();
 
-      const applications =
-        await Application.find({
-          user: req.user._id,
-        });
+    res.status(200).json({
+      success: true,
+      data: application,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-      const interviews = [];
+export const deleteInterview = async (req, res) => {
+  try {
+    const application = await Application.findOne({
+      _id: req.params.applicationId,
+      user: req.user._id,
+    });
 
-      applications.forEach(
-        (application) => {
-          application.interviews.forEach(
-            (interview) => {
-              if (
-                interview.interviewDate &&
-                new Date(
-                  interview.interviewDate
-                ) >= today &&
-                interview.result !==
-                  "Passed" &&
-                interview.result !==
-                  "Failed"
-              ) {
-                interviews.push({
-                  applicationId:
-                    application._id,
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
 
-                  companyName:
-                    application.companyName,
+    const interview = application.interviews.id(req.params.interviewId);
 
-                  role:
-                    application.role,
+    if (!interview) {
+      return res.status(404).json({
+        success: false,
+        message: "Interview not found",
+      });
+    }
 
-                  round:
-                    interview.round,
+    interview.deleteOne();
 
-                  interviewDate:
-                    interview.interviewDate,
+    await application.save();
 
-                  interviewer:
-                    interview.interviewer,
+    res.status(200).json({
+      success: true,
+      message: "Interview deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
-                  result:
-                    interview.result,
-                });
-              }
-            }
-          );
+export const getUpcomingInterviews = async (req, res) => {
+  try {
+    const today = new Date();
+
+    const applications = await Application.find({
+      user: req.user._id,
+    });
+
+    const interviews = [];
+
+    applications.forEach((application) => {
+      application.interviews.forEach((interview) => {
+        if (
+          interview.interviewDate &&
+          new Date(interview.interviewDate) >= today &&
+          interview.result !== "Passed" &&
+          interview.result !== "Failed"
+        ) {
+          interviews.push({
+            applicationId: application._id,
+
+            companyName: application.companyName,
+
+            role: application.role,
+
+            round: interview.round,
+
+            interviewDate: interview.interviewDate,
+
+            interviewer: interview.interviewer,
+
+            result: interview.result,
+          });
         }
-      );
-
-      interviews.sort(
-        (a, b) =>
-          new Date(
-            a.interviewDate
-          ) -
-          new Date(
-            b.interviewDate
-          )
-      );
-
-      res.status(200).json({
-        success: true,
-        data: interviews.slice(
-          0,
-          5
-        ),
       });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message,
-      });
-    }
-  };
+    });
 
+    interviews.sort(
+      (a, b) => new Date(a.interviewDate) - new Date(b.interviewDate),
+    );
 
-  
+    res.status(200).json({
+      success: true,
+      data: interviews.slice(0, 5),
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

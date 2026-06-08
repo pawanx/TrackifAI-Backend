@@ -1,10 +1,12 @@
 import express from "express";
 import cors from "cors";
 
-import applicationRoutes from "./routes/applicationRoutes.js"
+import applicationRoutes from "./routes/applicationRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
-import interviewRoutes from "./routes/interviewRoutes.js"
+import interviewRoutes from "./routes/interviewRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 const app = express();
 
@@ -15,25 +17,20 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "TrackifAI Backend is running"
+    message: "TrackifAI Backend is running",
   });
 });
 
 app.use("/api/auth", authRoutes);
-app.use(
-  "/api/applications",
-  applicationRoutes
-);
 
-app.use(
-  "/api/interviews",interviewRoutes
-)
+app.use("/api/applications", applicationRoutes);
 
+app.use("/api/interviews", interviewRoutes);
 
+app.use("/api/resumes", resumeRoutes);
 
-app.use(
-  "/api/resumes",
-  resumeRoutes
-);
+app.use("/api/activities", activityRoutes);
+
+app.use("/api/ai", aiRoutes);
 
 export default app;
