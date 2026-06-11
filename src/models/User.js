@@ -24,6 +24,15 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
+    resetPasswordToken: {
+      type : String,
+      select : false
+    },
+    resetPasswordExpires: {
+      type : Date,
+      select : false
+    },
+
     avatar: {
       type: String,
       default: "",
@@ -31,7 +40,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Hash password before saving
@@ -40,22 +49,12 @@ userSchema.pre("save", async function () {
 
   const salt = await bcrypt.genSalt(10);
 
-  this.password = await bcrypt.hash(
-    this.password,
-    salt
-  );
-
-  
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 // Compare entered password with hashed password
-userSchema.methods.matchPassword = async function (
-  enteredPassword
-) {
-  return await bcrypt.compare(
-    enteredPassword,
-    this.password
-  );
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model("User", userSchema);
