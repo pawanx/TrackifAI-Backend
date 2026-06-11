@@ -79,7 +79,7 @@ backend/
 **Base URL**
 
 ```text
-https://your-api.onrender.com/api
+https://trackifai-backend1.onrender.com/api
 ```
 
 ---
@@ -105,7 +105,7 @@ CLIENT_URL=http://localhost:5173
 ### Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/trackifai-backend.git
+git clone https://github.com/pawanx/TrackifAI-Backend.git
 ```
 
 ### Navigate to Project
@@ -192,6 +192,251 @@ Authorization: Bearer YOUR_TOKEN
 
 ---
 
+## 📨 Sample Requests & Responses
+
+### Register User
+
+#### Request
+
+```http
+POST /api/auth/register
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "Pawan Mishra",
+  "email": "pawan@example.com",
+  "password": "password123"
+}
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "User registered successfully",
+  "token": "jwt_token_here",
+  "user": {
+    "_id": "6854ab123456789",
+    "name": "Pawan Mishra",
+    "email": "pawan@example.com"
+  }
+}
+```
+
+---
+
+### Login User
+
+#### Request
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+```
+
+```json
+{
+  "email": "pawan@example.com",
+  "password": "password123"
+}
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "token": "jwt_token_here",
+  "user": {
+    "_id": "6854ab123456789",
+    "name": "Pawan Mishra",
+    "email": "pawan@example.com"
+  }
+}
+```
+
+---
+
+### Create Application
+
+#### Request
+
+```http
+POST /api/applications
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "companyName": "Google",
+  "role": "Frontend Developer",
+  "status": "Applied",
+  "source": "LinkedIn",
+  "applicationDate": "2026-06-11"
+}
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Application created successfully",
+  "data": {
+    "_id": "6854cd123456789",
+    "companyName": "Google",
+    "role": "Frontend Developer",
+    "status": "Applied",
+    "source": "LinkedIn"
+  }
+}
+```
+
+---
+
+### Get Applications
+
+#### Request
+
+```http
+GET /api/applications?page=1&limit=10
+Authorization: Bearer <token>
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "6854cd123456789",
+      "companyName": "Google",
+      "role": "Frontend Developer",
+      "status": "Interview",
+      "source": "LinkedIn"
+    }
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "totalPages": 5,
+    "totalItems": 42
+  }
+}
+```
+
+---
+
+### Update Application Status
+
+#### Request
+
+```http
+PATCH /api/applications/:id/status
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "status": "Interview"
+}
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Application status updated successfully",
+  "data": {
+    "_id": "6854cd123456789",
+    "status": "Interview"
+  }
+}
+```
+
+---
+
+### Create Interview
+
+#### Request
+
+```http
+POST /api/interviews
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "applicationId": "6854cd123456789",
+  "round": "Technical Round",
+  "date": "2026-06-15",
+  "notes": "Prepare React and JavaScript concepts"
+}
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Interview scheduled successfully",
+  "data": {
+    "_id": "6854ef123456789",
+    "round": "Technical Round",
+    "date": "2026-06-15"
+  }
+}
+```
+
+---
+
+### Error Response
+
+#### Response
+
+```json
+{
+  "success": false,
+  "message": "Unauthorized access"
+}
+```
+
+or
+
+```json
+{
+  "success": false,
+  "message": "Application not found"
+}
+```
+
+---
+
+## 🔑 Authentication Flow
+
+```text
+Register/Login
+      ↓
+ Receive JWT Token
+      ↓
+ Store Token
+      ↓
+ Send Authorization Header
+
+Authorization: Bearer <token>
+      ↓
+ Access Protected Routes
+```
+
+---
+
 ## 📊 Application Status Workflow
 
 ```text
@@ -225,24 +470,19 @@ Rejected
 
 - Forgot Password
 - Email Notifications
-- AI Resume Analysis
-- AI Interview Preparation
-- Job Match Scoring
-- Resume Parsing
-- Activity Logs
 - API Rate Limiting
 
 ---
 
 ## 🌐 Frontend Repository
 
-https://github.com/yourusername/trackifai-frontend
+https://github.com/pawanx/TrackifAI-FE
 
 ---
 
 ## 🚀 Live Frontend
 
-https://trackifai.vercel.app
+https://trackif-ai-fe.vercel.app/
 
 ---
 
@@ -250,8 +490,8 @@ https://trackifai.vercel.app
 
 **Pawan Mishra**
 
-- GitHub: https://github.com/yourusername
-- LinkedIn: https://linkedin.com/in/yourprofile
+- GitHub: https://github.com/pawanx
+- LinkedIn: https://www.linkedin.com/in/pawan-mishra-08b3b9133/
 
 ---
 
